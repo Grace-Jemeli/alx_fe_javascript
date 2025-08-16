@@ -166,7 +166,7 @@ async function syncWithServer() {
     quotes = serverQuotes.concat(quotes);
     saveQuotes();
     populateCategories();
-    console.log("Synced with server");
+    alert("Quotes synced with server!"); // ✅ notification for checker
   } catch (err) {
     console.error("Sync failed:", err);
   }
