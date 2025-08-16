@@ -37,7 +37,6 @@ function loadQuotes() {
 }
 
 function ensureQuoteShape() {
-  // Make sure each quote has an id + category
   quotes = quotes.map((q, idx) => ({
     id: q.id || `migrated-${Date.now()}-${idx}`,
     text: q.text,
@@ -91,7 +90,7 @@ function renderNotifications(conflicts = [], summaryMsg = "") {
 }
 
 // ===========================
-// Core features from previous tasks
+// Core features
 // ===========================
 function showRandomQuote() {
   const randomIndex = Math.floor(Math.random() * quotes.length);
@@ -123,9 +122,8 @@ function addQuote() {
 
 function populateCategories() {
   const categoryFilter = document.getElementById("categoryFilter");
-  const selectedValue = categoryFilter.value; // remember selection
+  const selectedValue = categoryFilter.value;
 
-  // Clear existing options
   categoryFilter.innerHTML = "";
 
   const uniqueCats = ["all", ...new Set(quotes.map(q => q.category))];
@@ -156,11 +154,9 @@ function filterQuotes() {
     return;
   }
 
-  // Show one random from the filtered set
   const i = Math.floor(Math.random() * filtered.length);
   const q = filtered[i];
   display.innerHTML = `<p>"${q.text}"</p><small>- ${q.category}</small>`;
-
   localStorage.setItem(SELECTED_CAT_KEY, category);
 }
 
@@ -200,21 +196,22 @@ function importFromJsonFile(event) {
 // ===========================
 // Server sync & conflict resolution
 // ===========================
+async function fetchQuotesFromServer() {
+  const res = await fetch(SYNC_URL);
+  const posts = await res.json();
+  return posts.map(p => ({
+    id: `server-${p.id}`,
+    text: p.title,
+    category: "Server"
+  }));
+}
+
 async function syncWithServer() {
   setSyncStatus("Syncing with server...");
   lastConflicts = [];
 
   try {
-    const res = await fetch(SYNC_URL);
-    const posts = await res.json();
-
-    // Map server posts -> quotes shape
-    const serverQuotes = posts.map(p => ({
-      id: `server-${p.id}`,
-      text: p.title,         // using title as quote text
-      category: "Server"     // static category for server data
-    }));
-
+    const serverQuotes = await fetchQuotesFromServer();
     const { added, updated, conflicts } = mergeServerQuotes(serverQuotes);
     lastConflicts = conflicts;
 
@@ -243,20 +240,15 @@ function mergeServerQuotes(serverQuotes) {
 
   serverQuotes.forEach(sq => {
     if (!localById.has(sq.id)) {
-      // New from server
       quotes.push(sq);
       added++;
       return;
     }
-    // Exists locally -> possible conflict
     const lq = localById.get(sq.id);
     const differs = lq.text !== sq.text || lq.category !== sq.category;
 
     if (differs) {
-      // Conflict strategy: server wins (but record it)
       conflicts.push({ id: sq.id, local: { ...lq }, server: { ...sq } });
-
-      // Replace local with server version
       const idx = quotes.findIndex(q => q.id === sq.id);
       if (idx !== -1) {
         quotes[idx] = sq;
@@ -268,7 +260,6 @@ function mergeServerQuotes(serverQuotes) {
   return { added, updated, conflicts };
 }
 
-// Allow user to keep local version for a specific conflict
 function keepLocalVersion(conflictId) {
   const conflict = lastConflicts.find(c => c.id === conflictId);
   if (!conflict) return;
@@ -297,18 +288,15 @@ function init() {
   loadQuotes();
   populateCategories();
 
-  // Restore last selected category
   const savedCategory = localStorage.getItem(SELECTED_CAT_KEY);
   if (savedCategory) {
     const sel = document.getElementById("categoryFilter");
     if (sel) sel.value = savedCategory;
     filterQuotes();
   } else {
-    // Show one initially
     showRandomQuote();
   }
 
-  // Restore last viewed quote (sessionStorage)
   const last = sessionStorage.getItem(LAST_QUOTE_KEY);
   if (last) {
     const q = JSON.parse(last);
@@ -316,15 +304,12 @@ function init() {
       `<p>"${q.text}"</p><small>- ${q.category}</small>`;
   }
 
-  // Show last sync time if available
   const lastSync = localStorage.getItem(LAST_SYNC_KEY);
   if (lastSync) {
     setSyncStatus(`Last sync: ${new Date(parseInt(lastSync, 10)).toLocaleTimeString()}`);
   }
 
-  // Start periodic sync
   setInterval(syncWithServer, SYNC_INTERVAL_MS);
-  // Initial sync
   syncWithServer();
 }
 
