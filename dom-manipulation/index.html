@@ -2,8 +2,8 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dynamic Quote Generator</title>
 </head>
 
@@ -26,15 +26,24 @@
     <label for="categoryFilter">Filter by category:</label>
     <select id="categoryFilter" onchange="filterQuotes()">
       <option value="all">All Categories</option>
-      <!-- Dynamically populated categories -->
+      <!-- Dynamically populated -->
     </select>
   </div>
 
   <!-- Import/Export -->
   <div>
-    <button id="exportBtn" onclick="exportQuotes()">Export Quotes</button>
+    <button onclick="exportToJsonFile()">Export Quotes</button>
     <input type="file" id="importFile" accept=".json" onchange="importFromJsonFile(event)" />
   </div>
+
+  <!-- Sync controls -->
+  <div id="syncBar">
+    <button id="syncNow">Sync Now</button>
+    <span id="syncStatus" aria-live="polite"></span>
+  </div>
+
+  <!-- Notifications / conflicts -->
+  <div id="notifications"></div>
 
   <script src="script.js"></script>
 </body>
