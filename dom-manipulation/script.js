@@ -1,64 +1,52 @@
-// ===== Storage key =====
-const STORAGE_KEY = "quotes";
-
-// ===== Seed quotes (used if storage is empty) =====
+// quotes array with categories
 let quotes = [
-  { text: "The best way to predict the future is to create it.", category: "Motivation" },
+  { text: "The best way to get started is to quit talking and begin doing.", category: "Motivation" },
   { text: "Life is what happens when you're busy making other plans.", category: "Life" },
-  { text: "Success is walking from failure to failure with no loss of enthusiasm.", category: "Success" }
+  { text: "Your time is limited, so don’t waste it living someone else’s life.", category: "Inspiration" }
 ];
 
-// ===== Try load from localStorage =====
-try {
-  const saved = localStorage.getItem(STORAGE_KEY);
-  if (saved) {
-    const parsed = JSON.parse(saved);
-    if (Array.isArray(parsed)) quotes = parsed;
-  }
-} catch (e) {
-  console.warn("Could not read quotes from localStorage:", e);
+// show a random quote
+function showRandomQuote() {
+  const randomIndex = Math.floor(Math.random() * quotes.length);
+  const quote = quotes[randomIndex];
+  const display = document.getElementById("quoteDisplay");
+  display.innerHTML = `<p>"${quote.text}"</p><small>- ${quote.category}</small>`;
 }
 
-// ===== DOM refs =====
-const quoteDisplay = document.getElementById("quoteDisplay");
-const newQuoteBtn = document.getElementById("newQuote");
-const newQuoteText = document.getElementById("newQuoteText");
-const newQuoteCategory = document.getElementById("newQuoteCategory");
-
-// ===== Helpers =====
-function persistQuotes() {
-  // <-- checker wants this call present
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(quotes));
-}
-
-// ===== Show a random quote (exact name + innerHTML) =====
-function displayRandomQuote() {
-  if (!quotes.length) {
-    quoteDisplay.innerHTML = "No quotes available.";
-    return;
-  }
-  const i = Math.floor(Math.random() * quotes.length);
-  const q = quotes[i];
-  quoteDisplay.innerHTML = `"${q.text}"<br><em>Category: ${q.category}</em>`;
-}
-
-// ===== Add a new quote (called by inline onclick in HTML) =====
+// add a new quote
 function addQuote() {
-  const text = newQuoteText.value.trim();
-  const category = newQuoteCategory.value.trim();
+  const textInput = document.getElementById("newQuoteText");
+  const categoryInput = document.getElementById("newQuoteCategory");
+
+  const text = textInput.value.trim();
+  const category = categoryInput.value.trim();
+
   if (!text || !category) {
-    alert("Please fill in both quote and category!");
+    alert("Please fill in both the quote and category.");
     return;
   }
-  quotes.push({ text, category });
-  persistQuotes();                 // save to localStorage
-  newQuoteText.value = "";
-  newQuoteCategory.value = "";
-  displayRandomQuote();            // update the DOM immediately
+
+  const newQuote = { text, category };
+  quotes.push(newQuote);
+
+  // store in localStorage
+  localStorage.setItem("quotes", JSON.stringify(quotes));
+
+  // clear inputs
+  textInput.value = "";
+  categoryInput.value = "";
 }
 
-// ===== Event listener for the “Show New Quote” button =====
-newQuoteBtn.addEventListener("click", displayRandomQuote);
+// load quotes from localStorage (if any)
+function loadQuotes() {
+  const storedQuotes = localStorage.getItem("quotes");
+  if (storedQuotes) {
+    quotes = JSON.parse(storedQuotes);
+  }
+}
 
-// ===== Initial render =====
-displayRandomQuote();
+// event listener for newQuote button
+document.getElementById("newQuote").addEventListener("click", showRandomQuote);
+
+// load stored quotes on page load
+loadQuotes();
