@@ -5,18 +5,18 @@ let quotes = [
   { text: "Your time is limited, so don’t waste it living someone else’s life.", category: "Inspiration" }
 ];
 
-// Show a random quote
+// show a random quote
 function showRandomQuote() {
   const randomIndex = Math.floor(Math.random() * quotes.length);
   const quote = quotes[randomIndex];
   const display = document.getElementById("quoteDisplay");
   display.innerHTML = `<p>"${quote.text}"</p><small>- ${quote.category}</small>`;
 
-  // Save last viewed quote in sessionStorage
+  // store last viewed quote in sessionStorage
   sessionStorage.setItem("lastQuote", JSON.stringify(quote));
 }
 
-// Add a new quote
+// add a new quote
 function addQuote() {
   const textInput = document.getElementById("newQuoteText");
   const categoryInput = document.getElementById("newQuoteCategory");
@@ -32,23 +32,23 @@ function addQuote() {
   const newQuote = { text, category };
   quotes.push(newQuote);
 
-  // Save to localStorage
+  // save updated quotes
   saveQuotes();
 
-  // Update categories dropdown
+  // update dropdown with new category if needed
   populateCategories();
 
-  // Clear inputs
+  // clear inputs
   textInput.value = "";
   categoryInput.value = "";
 }
 
-// Save quotes to localStorage
+// save quotes to localStorage
 function saveQuotes() {
   localStorage.setItem("quotes", JSON.stringify(quotes));
 }
 
-// Load quotes from localStorage
+// load quotes from localStorage
 function loadQuotes() {
   const storedQuotes = localStorage.getItem("quotes");
   if (storedQuotes) {
@@ -56,52 +56,66 @@ function loadQuotes() {
   }
 }
 
-// Populate category filter dropdown
+// Populate category filter dropdown using appendChild
 function populateCategories() {
   const categoryFilter = document.getElementById("categoryFilter");
-  const selectedValue = categoryFilter.value; // keep user’s selection
+  const selectedValue = categoryFilter.value; // remember current selection
+
+  // Clear existing options
+  categoryFilter.innerHTML = "";
 
   // Collect unique categories
   const categories = ["all", ...new Set(quotes.map(q => q.category))];
 
-  // Rebuild dropdown
-  categoryFilter.innerHTML = categories
-    .map(cat => `<option value="${cat}">${cat}</option>`)
-    .join("");
+  // Create and append each option
+  categories.forEach(cat => {
+    const option = document.createElement("option");
+    option.value = cat;
+    option.textContent = cat;
+    categoryFilter.appendChild(option);
+  });
 
-  // Restore selection if possible
+  // Restore previous selection if still valid
   if (categories.includes(selectedValue)) {
     categoryFilter.value = selectedValue;
   }
 }
 
-// Filter quotes based on selected category
+// filter quotes by category
 function filterQuotes() {
-  const selectedCategory = document.getElementById("categoryFilter").value;
+  const category = document.getElementById("categoryFilter").value;
   const display = document.getElementById("quoteDisplay");
 
-  localStorage.setItem("selectedCategory", selectedCategory);
+  let filteredQuotes = category === "all" ? quotes : quotes.filter(q => q.category === category);
 
-  if (selectedCategory === "all") {
-    display.innerHTML = quotes.map(q => `<p>"${q.text}"</p><small>- ${q.category}</small>`).join("");
-  } else {
-    const filtered = quotes.filter(q => q.category === selectedCategory);
-    display.innerHTML = filtered.map(q => `<p>"${q.text}"</p><small>- ${q.category}</small>`).join("");
+  if (filteredQuotes.length === 0) {
+    display.innerHTML = "<p>No quotes available for this category.</p>";
+    return;
   }
+
+  const randomIndex = Math.floor(Math.random() * filteredQuotes.length);
+  const quote = filteredQuotes[randomIndex];
+  display.innerHTML = `<p>"${quote.text}"</p><small>- ${quote.category}</small>`;
+
+  // save selected category to localStorage
+  localStorage.setItem("selectedCategory", category);
 }
 
-// Export quotes as JSON file
-function exportQuotes() {
-  const blob = new Blob([JSON.stringify(quotes, null, 2)], { type: "application/json" });
+// export quotes to JSON
+function exportToJsonFile() {
+  const dataStr = JSON.stringify(quotes, null, 2);
+  const blob = new Blob([dataStr], { type: "application/json" });
   const url = URL.createObjectURL(blob);
+
   const a = document.createElement("a");
   a.href = url;
   a.download = "quotes.json";
+  document.body.appendChild(a);
   a.click();
-  URL.revokeObjectURL(url);
+  document.body.removeChild(a);
 }
 
-// Import quotes from JSON file
+// import quotes from JSON file
 function importFromJsonFile(event) {
   const fileReader = new FileReader();
   fileReader.onload = function (event) {
@@ -109,33 +123,29 @@ function importFromJsonFile(event) {
     quotes.push(...importedQuotes);
     saveQuotes();
     populateCategories();
-    alert('Quotes imported successfully!');
+    alert("Quotes imported successfully!");
   };
   fileReader.readAsText(event.target.files[0]);
 }
 
-// Event listener for "Show New Quote"
+// event listeners
 document.getElementById("newQuote").addEventListener("click", showRandomQuote);
 
-// Initialize app
-function init() {
-  loadQuotes();
-  populateCategories();
+// initialize app
+loadQuotes();
+populateCategories();
 
-  // Restore last selected category
-  const savedCategory = localStorage.getItem("selectedCategory");
-  if (savedCategory) {
-    document.getElementById("categoryFilter").value = savedCategory;
-    filterQuotes();
-  }
-
-  // Restore last viewed quote (sessionStorage)
-  const lastQuote = sessionStorage.getItem("lastQuote");
-  if (lastQuote) {
-    const quote = JSON.parse(lastQuote);
-    document.getElementById("quoteDisplay").innerHTML =
-      `<p>"${quote.text}"</p><small>- ${quote.category}</small>`;
-  }
+// restore last selected category filter
+const savedCategory = localStorage.getItem("selectedCategory");
+if (savedCategory) {
+  document.getElementById("categoryFilter").value = savedCategory;
+  filterQuotes();
 }
 
-init();
+// restore last viewed quote from sessionStorage
+const lastQuote = sessionStorage.getItem("lastQuote");
+if (lastQuote) {
+  const quote = JSON.parse(lastQuote);
+  document.getElementById("quoteDisplay").innerHTML =
+    `<p>"${quote.text}"</p><small>- ${quote.category}</small>`;
+}
