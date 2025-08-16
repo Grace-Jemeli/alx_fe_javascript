@@ -12,18 +12,18 @@ const newQuoteText = document.getElementById("newQuoteText");
 const newQuoteCategory = document.getElementById("newQuoteCategory");
 const addQuoteBtn = document.getElementById("addQuoteBtn");
 
-// Function to show a random quote
-function displayRandomQuote() {
+// ✅ Function to show a random quote
+function showRandomQuote() {
   if (quotes.length === 0) {
-    quoteDisplay.textContent = "No quotes available.";
+    quoteDisplay.innerHTML = "No quotes available.";
     return;
   }
   const randomIndex = Math.floor(Math.random() * quotes.length);
   const quote = quotes[randomIndex];
-  quoteDisplay.textContent = `"${quote.text}" - ${quote.category}`;
+  quoteDisplay.innerHTML = `"${quote.text}" - ${quote.category}`;
 }
 
-// Function to add a new quote
+// ✅ Function to add a new quote
 function addQuote() {
   const text = newQuoteText.value.trim();
   const category = newQuoteCategory.value.trim();
@@ -40,10 +40,10 @@ function addQuote() {
   newQuoteText.value = "";
   newQuoteCategory.value = "";
 
-  // Update DOM with the new quote
-  displayRandomQuote();
+  // Show the newly added quote
+  showRandomQuote();
 }
 
-// ✅ Attach event listeners (so the checker detects them)
-newQuoteBtn.addEventListener("click", displayRandomQuote);
+// ✅ Attach event listeners
+newQuoteBtn.addEventListener("click", showRandomQuote);
 addQuoteBtn.addEventListener("click", addQuote);
